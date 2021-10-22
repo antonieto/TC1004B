@@ -1,30 +1,34 @@
-#include <pthread.h> 
-#include <stdio.h> 
+#include <stdio.h>
 #include <unistd.h>
+#include <pthread.h>
 
-int NUM_THREADS = 10;
-int saldo = 0;
+#define NUM_THREADS 10000
+int saldo;
 
+pthread_mutex_t lockSaldo = PTHREAD_MUTEX_INITIALIZER;
 
-pthread_mutex_t lockSaldo =  PTHREAD_MUTEX_INITIALIZER;
-
-void* printHola(void *arg){
-    printf("Hola desde un hilo \n");  
-    saldo += 100;
+void *printHola(void *arg){
+    int saldolocal;
+    pthread_mutex_lock(&lockSaldo);
+    saldolocal = saldo;
+    saldolocal += 100;
+    saldo = saldolocal;
+    pthread_mutex_unlock(&lockSaldo);
     pthread_exit(NULL);
-} 
+}
 
 int main(){
-    pthread_t threads[NUM_THREADS]; 
+    pthread_t threads[NUM_THREADS];
+    saldo = 0;
     for(int i = 0; i < NUM_THREADS; i++){
-        pthread_create(&threads[i], NULL, printHola, NULL); 
+        pthread_create(&threads[i],NULL,printHola,NULL);
+    }
     
-    }  
     for(int i = 0; i < NUM_THREADS; i++){
-        pthread_join(threads[i], NULL);
+        pthread_join(threads[i],NULL);
+    }
+    
+    printf("El valor del saldo es %d\n",saldo);
 
-    }  
-    printf("Saldo: %d \n", saldo); 
-
-    pthread_exit(NULL); 
+    pthread_exit(NULL);
 }
